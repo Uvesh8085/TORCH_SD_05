@@ -1,0 +1,52 @@
+import requests
+from bs4 import BeautifulSoup
+import csv
+
+def scrape_product_data(url):
+    # Send a GET request to the URL
+    response = requests.get(url)
+    # Parse HTML content
+    soup = BeautifulSoup(response.content, 'html.parser')
+    
+    # Initialize lists to store product data
+    product_names = []
+    product_prices = []
+    product_ratings = []
+
+    # Find all product elements
+    products = soup.find_all('div', class_='product')
+    
+    # Extract product information
+    for product in products:
+        # Extract product name
+        name = product.find('h2').text.strip()
+        product_names.append(name)
+        
+        # Extract product price
+        price = product.find('span', class_='price').text.strip()
+        product_prices.append(price)
+        
+        # Extract product rating (if available)
+        rating_tag = product.find('span', class_='rating')
+        rating = rating_tag['title'] if rating_tag else 'N/A'
+        product_ratings.append(rating)
+
+    return product_names, product_prices, product_ratings
+
+def save_to_csv(product_names, product_prices, product_ratings):
+    # Create a CSV file and write product data
+    with open('products.csv', 'w', newline='', encoding='utf-8') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(['Product Name', 'Price', 'Rating'])
+        for name, price, rating in zip(product_names, product_prices, product_ratings):
+            writer.writerow([name, price, rating])
+
+if __name__ == "__main__":
+    # URL of the e-commerce website
+    url = 'https://www.amazon.in/'
+    
+    # Scrape product data
+    product_names, product_prices, product_ratings = scrape_product_data(url)
+    
+    # Save data to CSV file
+    save_to_csv(product_names, product_prices, product_ratings)
